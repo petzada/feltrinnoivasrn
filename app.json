@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "feltrinnoivasrn",
+    "slug": "feltrinnoivasrn",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icone.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/icone.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icone.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/icone.png"
+    },
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}
