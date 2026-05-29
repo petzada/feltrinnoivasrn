@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, ScrollView, Image, View, TextInput, TouchableOpacity, NativeSyntheticEvent, NativeScrollEvent, Dimensions } from 'react-native';
+import { StyleSheet, Text, ScrollView, Image, View, TextInput, TouchableOpacity, NativeSyntheticEvent, NativeScrollEvent, Dimensions, Modal, FlatList, Pressable } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
@@ -14,13 +14,16 @@ import { cores, fontes, tamanhosFonte, espacos, raios, sombra } from '../tema'
 
 const SCREEN = Dimensions.get('window');
 const REVIEW_PAGE_W = SCREEN.width - espacos.base * 2;
+const MODAL_W = Math.min(SCREEN.width - espacos.base * 2, 430);
 const IDS_DESTAQUES = new Set(destaques.map((item) => item.id));
 
-export default function Produtos({ navigation }: any) {
+export default function Produtos() {
 
   const [filtroSelecionado, setFiltroSelecionado] = useState('Todos');
   const [termoBusca, setTermoBusca] = useState('');
   const [indiceReview, setIndiceReview] = useState(0);
+  const [vestidoSelecionado, setVestidoSelecionado] = useState<any>(null);
+  const [indiceCarrossel, setIndiceCarrossel] = useState(0);
   const reviewsRef = useRef<ScrollView>(null);
 
   useEffect(() => {
@@ -42,7 +45,19 @@ export default function Produtos({ navigation }: any) {
   };
 
   const abrirDetalhes = (vestido: any) => {
-    navigation.navigate('DetalheVestido', { vestido });
+    setIndiceCarrossel(0);
+    setVestidoSelecionado(vestido);
+  };
+
+  const fecharDetalhes = () => {
+    setVestidoSelecionado(null);
+    setIndiceCarrossel(0);
+  };
+
+  const handleScrollCarrossel = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const scrollX = event.nativeEvent.contentOffset.x;
+    const indice = Math.round(scrollX / MODAL_W);
+    setIndiceCarrossel(indice);
   };
 
   // Filtra por tamanho E texto (nome ou estilo), excluindo destaques, limitado a 6
@@ -178,6 +193,74 @@ export default function Produtos({ navigation }: any) {
           <Text style={styles.semResultado}>Nenhum vestido encontrado para a sua busca.</Text>
         )}
       </ScrollView>
+
+      <Modal
+        visible={vestidoSelecionado !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={fecharDetalhes}
+      >
+        <View style={styles.modalBackdrop}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={fecharDetalhes} />
+
+          {vestidoSelecionado ? (
+            <View style={styles.modalCard}>
+              <ScrollView
+                style={styles.modalBody}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.modalScrollContent}
+              >
+                <View style={styles.carrosselContainer}>
+                  <FlatList
+                    data={vestidoSelecionado.imagens}
+                    keyExtractor={(_, index) => index.toString()}
+                    renderItem={({ item }) => (
+                      <Image source={item} style={styles.imagemCarrossel} resizeMode="cover" />
+                    )}
+                    horizontal
+                    pagingEnabled
+                    scrollEventThrottle={16}
+                    onScroll={handleScrollCarrossel}
+                    showsHorizontalScrollIndicator={false}
+                  />
+
+                  <TouchableOpacity style={styles.botaoFechar} onPress={fecharDetalhes}>
+                    <Ionicons name="close" size={24} color={cores.texto} />
+                  </TouchableOpacity>
+
+                  {vestidoSelecionado.imagens.length > 1 ? (
+                    <Text style={styles.carrosselContador}>
+                      {indiceCarrossel + 1} / {vestidoSelecionado.imagens.length}
+                    </Text>
+                  ) : null}
+                </View>
+
+                <View style={styles.info}>
+                  <Text style={styles.estilo}>{vestidoSelecionado.estilo}</Text>
+                  <Text style={styles.titulo}>{vestidoSelecionado.titulo}</Text>
+                  <Text style={styles.preco}>{vestidoSelecionado.preco}</Text>
+
+                  <View style={styles.divider} />
+
+                  <Text style={styles.descricao}>{vestidoSelecionado.descricao}</Text>
+
+                  <Text style={styles.detalhe}>
+                    Silhueta {vestidoSelecionado.estilo} em {vestidoSelecionado.cor}. Tamanho {vestidoSelecionado.tamanho} disponível
+                    para prova e ajuste na loja, com orientação da equipe para o melhor caimento.
+                  </Text>
+                </View>
+              </ScrollView>
+
+              <View style={styles.rodape}>
+                <TouchableOpacity style={styles.botaoWhatsApp} activeOpacity={0.85}>
+                  <Ionicons name="logo-whatsapp" size={20} color={cores.branco} />
+                  <Text style={styles.botaoWhatsAppTexto}>Entrar em Contato</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : null}
+        </View>
+      </Modal>
 
       <StatusBar style="dark" animated />
     </View>
@@ -416,5 +499,127 @@ const styles = StyleSheet.create({
     color: cores.textoSuave,
     textAlign: 'center',
     paddingVertical: espacos.xl,
+  },
+
+  // Modal de detalhes
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: espacos.base,
+  },
+  modalCard: {
+    width: MODAL_W,
+    maxHeight: '88%',
+    backgroundColor: cores.branco,
+    borderRadius: raios.md,
+    overflow: 'hidden',
+    ...sombra,
+  },
+  modalBody: {
+    flexShrink: 1,
+  },
+  modalScrollContent: {
+    paddingBottom: espacos.base,
+  },
+  carrosselContainer: {
+    position: 'relative',
+  },
+  imagemCarrossel: {
+    width: MODAL_W,
+    height: 300,
+    backgroundColor: cores.fundoSuave,
+  },
+  botaoFechar: {
+    position: 'absolute',
+    top: espacos.sm,
+    right: espacos.sm,
+    width: 40,
+    height: 40,
+    borderRadius: raios.full,
+    backgroundColor: cores.branco,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...sombra,
+  },
+  carrosselContador: {
+    position: 'absolute',
+    bottom: espacos.md,
+    right: espacos.base,
+    fontFamily: fontes.padrao,
+    fontSize: tamanhosFonte.pequeno,
+    color: cores.branco,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    paddingHorizontal: espacos.sm,
+    paddingVertical: espacos.xs,
+    borderRadius: raios.full,
+    overflow: 'hidden',
+  },
+  info: {
+    paddingHorizontal: espacos.base,
+    paddingTop: espacos.base,
+  },
+  estilo: {
+    fontFamily: fontes.padrao,
+    fontSize: tamanhosFonte.micro,
+    color: cores.textoSuave,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: espacos.xs,
+  },
+  titulo: {
+    fontFamily: fontes.padrao,
+    fontSize: tamanhosFonte.tituloGrande,
+    fontWeight: '600',
+    color: cores.texto,
+    marginBottom: espacos.sm,
+  },
+  preco: {
+    fontFamily: fontes.padrao,
+    fontSize: tamanhosFonte.titulo,
+    fontWeight: '600',
+    color: cores.texto,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: cores.borda,
+    marginVertical: espacos.base,
+  },
+  descricao: {
+    fontFamily: fontes.padrao,
+    fontSize: tamanhosFonte.corpoGrande,
+    color: cores.textoCorpo,
+    lineHeight: 24,
+    marginBottom: espacos.md,
+  },
+  detalhe: {
+    fontFamily: fontes.padrao,
+    fontSize: tamanhosFonte.corpo,
+    color: cores.textoSuave,
+    lineHeight: 22,
+  },
+  rodape: {
+    borderTopWidth: 1,
+    borderTopColor: cores.borda,
+    paddingHorizontal: espacos.base,
+    paddingTop: espacos.md,
+    paddingBottom: espacos.lg,
+    backgroundColor: cores.branco,
+  },
+  botaoWhatsApp: {
+    backgroundColor: cores.whatsapp,
+    paddingVertical: 14,
+    borderRadius: raios.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: espacos.sm,
+  },
+  botaoWhatsAppTexto: {
+    color: cores.branco,
+    fontSize: tamanhosFonte.corpoGrande,
+    fontWeight: '500',
+    fontFamily: fontes.padrao,
   },
 });

@@ -19,7 +19,6 @@ import TelaBoasVindas from "./telas/BoasVindas"
 import TelaProdutos from "./telas/Produtos"
 import TelaSobre from "./telas/Sobre"
 import TelaPerfil from "./telas/Perfil"
-import TelaDetalhe from "./telas/Detalhe"
 
 //MENU - BOTTOM TABS
 const Tab = createBottomTabNavigator();
@@ -83,7 +82,6 @@ export default function App() {
             >
               <Stack.Screen name="BoasVindas" component={TelaBoasVindas}/>
               <Stack.Screen name="Menu" component={Menu}/>
-              <Stack.Screen name="DetalheVestido" component={TelaDetalhe}/>
             </Stack.Navigator>
         </NavigationContainer>
 
